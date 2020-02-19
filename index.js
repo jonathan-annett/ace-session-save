@@ -24,12 +24,14 @@ require("./@")(module,function(window) {
     var sessionFromJSON = function(data) {
         var session = ace.createEditSession(data.value);
         session.$undoManager.$doc = session; // workaround for a bug in ace
-        session.setOptions(data.options);
-        session.$undoManager.$undoStack = data.history.undo;
-        session.$undoManager.$redoStack = data.history.redo;
-        session.selection.fromJSON(data.selection);
-        session.setScrollTop(data.scrollTop);
-        session.setScrollLeft(data.scrollLeft);
+        if (data.options) session.setOptions(data.options);
+        if (data.history) {
+            session.$undoManager.$undoStack = data.history.undo;
+            session.$undoManager.$redoStack = data.history.redo;
+        }
+        if (data.selection)  session.selection.fromJSON(data.selection);
+        if (data.scrollTop)  session.setScrollTop(data.scrollTop);
+        if (data.scrollLeft) session.setScrollLeft(data.scrollLeft);
         return session;
     };
     
@@ -63,28 +65,6 @@ require("./@")(module,function(window) {
     
     function deserialize (editor,json,cb) {
         
-        var Range = window.ace.require("ace/range").Range;
-        
-        function deltaRangeFixup (delta) {
-            delta.range = Range.fromPoints(delta.range.start, delta.range.end);
-        }
-        
-        function deltaArrayFixup(element) {
-            element.deltas.forEach(deltaRangeFixup);
-        }
-        
-        function stackElementFixup(stackElement) {
-            stackElement.forEach(deltaArrayFixup);
-        }
-        
-        function stackArrayFixup(stackArray) {
-            if (!stackArray) return [];
-            stackArray.forEach(stackElementFixup);
-            return stackArray;
-        }
-        
-
-    
         try {
                cb (undefined,(function(session,state){
         
