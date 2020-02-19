@@ -10,9 +10,11 @@
   "dependencies": {
   },
   "devDependencies": {},
-  "scripts": {},
-  "keywords": [
-  ],
+  "scripts": {
+    "build": "node . --build",
+    "test": "node . --demo"
+  },
+  "keywords": [],
   "main": "index.js",
   "name": "ace-session-save",
   "repository": {

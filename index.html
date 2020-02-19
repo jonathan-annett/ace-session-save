@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<title>SessionSerialize parent</title>
+<style type="text/css" media="screen">
+    #editor { 
+        position: absolute;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        left: 0;
+        font-size:12pt;
+    }
+    body.startup #editor { 
+        display:none;
+    }
+</style>
+</head>
+<body class="startup">
+
+<div id="editor">
+   
+   function demo() {
+   
+      console.log("this is not very efficient");
+      console.log("but proves a point. every change or cursor movement");
+      console.log("send the entire session state to the other window");
+      console.log("this includes the undo and redo history");
+      
+      console.log("click anywhere to open the second window");
+     
+   }
+   
+   
+</div>
+    
+<script src="${package}.js" type="text/javascript" charset="utf-8"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.4.7/ace.js" type="text/javascript" charset="utf-8"></script>
+<script>
+
+    var editor = ace.edit("editor");
+    editor.setTheme("ace/theme/chaos");
+    editor.session.setMode("ace/mode/javascript");
+    function configureWorker(e, session) {
+        if (session.getMode().$id == "ace/mode/javascript") {
+            if (session.$worker) {
+               session.$worker.send("changeOptions",[ {undef: true,maxerr:10000}]);
+            }
+        }
+        setTimeout(document.body.classList.remove.bind(document.body.classList,"startup"),1);
+    }
+    
+    
+    var childEditor;
+    function launchChild(){
+        document.removeEventListener("mousedown",launchChild);
+        childEditor = window.open("child.html");
+        childEditor.onload = function () {
+             syncParentToChild();
+             hookParent();
+        }
+    }
+    
+    document.addEventListener("mousedown",launchChild);
+    
+    editor.session.on("changeMode", configureWorker);
+    
+    function syncParentToChild(){
+        if (childEditor && !childEditor.closed && childEditor.getEditor && !syncParentToChild.reentrant)  {
+            syncParentToChild.reentrant = true;
+             
+        
+            ace_session_json.serialize(editor,["theme"],function(err,json){
+                if (err) return console.log(err);
+                if (!json) return console.log("no json");
+                ace_session_json.deserialize(childEditor.getEditor(),json,function(err){
+                   if (err) return console.log(err);
+                   hookChild();
+                   syncParentToChild.reentrant = false;
+                });
+            });
+        }
+    }
+    
+    
+    function syncChildToParent(){
+        
+        if (!syncChildToParent.reentrant)  {
+            syncChildToParent.reentrant = true;
+            
+
+            ace_session_json.serialize(childEditor.getEditor(),["theme"],function(err,json){
+                if (err) return console.log(err);
+                if (!json) return console.log("no json");
+                ace_session_json.deserialize(editor,json,function(err){
+                   if (err) return console.log(err);
+                   hookParent();
+                   syncChildToParent.reentrant = false;
+                });
+            });
+        }
+    }
+    
+    function replaceEvents(s,fn) {
+        var evs = ["change","changeScrollTop","changeScrollLeft"];
+        evs.forEach(function(e){s.removeListener(e,fn);});
+        evs.forEach(function(e){s.on(e,fn)});
+        s.selection.removeListener("changeCursor",fn);
+        s.selection.on("changeCursor",fn);
+    }
+    
+    
+    function hookParent() {
+        replaceEvents(editor.session,syncParentToChild);
+    }
+    
+    function hookChild() {
+        if (childEditor&&childEditor.getEditor) {
+            replaceEvents(childEditor.getEditor().session,syncChildToParent);
+        }
+    }
+    
+    hookParent();
+
+</script>
+</body>
+</html>

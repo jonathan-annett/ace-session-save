@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<title>SessionSerialize child</title>
+<style type="text/css" media="screen">
+    #editor { 
+        position: absolute;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        left: 0;
+        font-size:12pt;
+    }
+    body.startup #editor { 
+        display:none;
+    }
+</style>
+</head>
+<body class="startup">
+
+<div id="editor">
+</div>
+    
+<script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.4.7/ace.js" type="text/javascript" charset="utf-8"></script>
+<script>
+   
+   var editor = ace.edit("editor");
+   editor.setTheme("ace/theme/cobalt");
+   editor.session.setMode("ace/mode/javascript");
+   function configureWorker(e, session) {
+       if (session.getMode().$id == "ace/mode/javascript") {
+           if (session.$worker) {
+              session.$worker.send("changeOptions",[ {undef: true,maxerr:10000}]);
+           }
+       }
+       setTimeout(document.body.classList.remove.bind(document.body.classList,"startup"),1);
+   }
+   
+   editor.session.on("changeMode", configureWorker);
+   
+   function getEditor() {
+       return editor;
+   }
+  
+   
+</script>
+</body>
+</html>
