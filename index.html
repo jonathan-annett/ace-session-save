@@ -103,10 +103,10 @@
     
     function replaceEvents(s,fn) {
         var evs = ["change","changeScrollTop","changeScrollLeft"];
-        evs.forEach(function(e){s.removeListener(e,fn);});
-        evs.forEach(function(e){s.on(e,fn)});
-        s.selection.removeListener("changeCursor",fn);
-        s.selection.on("changeCursor",fn);
+        evs.forEach(function(e){s.removeEventListener(e,fn);});
+        evs.forEach(function(e){s.addEventListener(e,fn)});
+        s.selection.removeEventListener("changeCursor",fn);
+        s.selection.addEventListener("changeCursor",fn);
     }
     
     
